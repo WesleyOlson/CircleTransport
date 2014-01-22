@@ -1,0 +1,46 @@
+import java.awt.Color;
+import java.awt.Graphics;
+
+
+public class Enemy extends Ship {
+	private int ticker=0;
+	private int skips;
+	public boolean movingRight;
+	public int changeTicker=0;
+	
+	
+	Enemy(){
+		super();
+		movingRight=Math.random()>.5?true:false;
+		skips=(int) Math.floor(Math.random()*7+10);
+	}
+	
+	public boolean FIREPEWPEWPEW(){
+		ticker++;
+		return timeToFire();
+	}
+	
+	private boolean timeToFire(){
+		return (ticker%skips==0);
+	}
+	
+	public void changeDirection(){
+		if(changeTicker==0){
+			movingRight=!movingRight;
+			changeTicker=1;
+		}
+		else
+			changeTicker--;
+	}
+	
+	public void draw(Graphics p){
+		if(painted){
+			p.setColor(Color.red);
+			p.fillOval(x,y,size,size);
+		}
+		else{
+			p.setColor(Color.white);
+			p.fillOval((int)x, (int)y, 0, 0);
+		}
+	}
+}
