@@ -1,0 +1,489 @@
+/*created by Wesley Olson
+ * Version 1.0
+ * 4/20/2013
+ */
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.border.TitledBorder;
+
+public class CircleTransport extends JFrame{
+	Ship you;
+	int difficulty;
+	int time;
+	int ammo=30;
+	int boltSpeedDifferential=2;
+	int killCount;
+	HashMap<Integer,Ship> shipMap=new HashMap();
+	HashMap<Integer,Bolt> boltMap=new HashMap();
+	int enemyIndex=0;
+	int boltIndex=0;
+	int enemyXTicker=0;
+	boolean specialMessage;
+	JPanel scorePanel;
+	JPanel drawPanel;
+	JPanel center;
+	
+	//menu
+	JPanel menu;
+	JLabel title;
+	JLabel creator;
+	JPanel midPanel;
+	String[] difficulties={"Easy","Medium","Hard","Bru\u0308tal"};
+	JComboBox<String> difficultyBox;
+	JButton play;
+	JLabel diff;
+	
+	//scorePanel items
+	JPanel youInfo;
+	JLabel hpBar;
+	JLabel timeL;
+	JLabel ammoL;
+	
+	public CircleTransport(String s) {
+		super(s);
+		setFocusable(true);
+		setLayout(new BorderLayout());
+		
+		center=new JPanel();
+		menu=new JPanel();
+		scorePanel=new JPanel();
+		scorePanel.setPreferredSize(new Dimension(700,40));
+		drawPanel=new JPanel(){
+	        public void paintComponent(Graphics g){
+	        	Collection<Ship> items=shipMap.values();
+	        	for(Ship e: items)
+	        		try{
+	        			e.draw(g);}catch(Exception ew){} 
+	        	Collection<Bolt> items2 =boltMap.values();
+	        	for(Bolt b: items2)
+	        		try{
+	        			b.draw(g);}catch(Exception ew){} 
+	        }
+	       public Dimension getPreferredSize(){
+		          return new Dimension(700, 500);
+		   }
+		};
+
+		you=new Ship(100,20,300,400);
+		shipMap.put(enemyIndex++, you);
+		
+		for(int i=0;i<4;i++){
+			Enemy enemy1=new Enemy();
+			shipMap.put(enemyIndex++,enemy1);
+		}
+		returnToMenu();
+		add(center);
+		
+	}
+	
+	public void returnToMenu(){
+		center.removeAll();
+		time=400;
+		menu.setLayout(new BorderLayout());
+		midPanel=new JPanel();
+		midPanel.setLayout(new BorderLayout());
+		creator=new JLabel("Created by Wesley Olson");
+		title=new JLabel("Circle Transport");
+		diff=new JLabel("Choose Difficulty:");
+		title.setHorizontalAlignment( SwingConstants.CENTER );
+		title.setPreferredSize(new Dimension(700,200));
+		play=new JButton("Play!");
+		PlayListener pl=new PlayListener();
+		play.addActionListener(pl);
+		play.setPreferredSize(new Dimension(700,200));
+		difficultyBox=new JComboBox<String>(difficulties);
+		difficultyBox.setAlignmentY(CENTER_ALIGNMENT);
+		difficultyBox.setPreferredSize(new Dimension(200,100));
+		midPanel.add(diff,BorderLayout.NORTH);
+		diff.setHorizontalAlignment( SwingConstants.CENTER );
+		midPanel.add(difficultyBox,BorderLayout.CENTER);
+		midPanel.add(play,BorderLayout.SOUTH);
+		menu.add(title,BorderLayout.NORTH);
+		menu.add(midPanel,BorderLayout.CENTER);
+		menu.add(creator,BorderLayout.SOUTH);
+		center.add(menu);
+	}
+	
+	
+	public class PlayListener implements ActionListener{
+		public void actionPerformed(ActionEvent arg0) {
+			center.removeAll();
+			System.out.println("Starting game!");
+			youInfo=new JPanel();
+			hpBar=new JLabel("HP: "+you.hp+"/100"); 
+			timeL=new JLabel("   Time: "+time);
+			ammoL=new JLabel("   Ammo: "+ammo);
+			youInfo.setPreferredSize(new Dimension(700,50));
+			youInfo.add(hpBar);
+			youInfo.add(timeL);
+			youInfo.add(ammoL);
+			youInfo.setBorder(new TitledBorder("Info"));
+			drawPanel.setBorder(new TitledBorder("Survive!"));
+			center.add(youInfo,BorderLayout.NORTH);
+			center.add(drawPanel,BorderLayout.CENTER);
+			youListen move=new youListen();
+			addKeyListener(move);
+			//difficulties
+			difficulty=0;
+			if(difficultyBox.getSelectedIndex()!=0){
+				difficulty=1;
+				for(int i=0;i<8;i++){
+					Enemy enemyX=new Enemy();
+					shipMap.put(enemyIndex++,enemyX);
+				}					
+			}
+			if(difficultyBox.getSelectedIndex()==2){
+				difficulty=2;
+				for(int i=0;i<5;i++){
+					Enemy enemyX=new Enemy();
+					shipMap.put(enemyIndex++,enemyX);
+				}	
+			}
+			if(difficultyBox.getSelectedIndex()==3){
+				difficulty=3;
+				time=600;
+				for(int i=0;i<7;i++){
+					Enemy enemyX=new Enemy();
+					shipMap.put(enemyIndex++,enemyX);
+				}	
+			} 
+        	Collection<Ship> items=shipMap.values();
+			for(Ship e: items){
+          		if(e instanceof Enemy){
+          			for(int i=0;i<5;i++){
+          				for(Ship e2: items){
+          					if(e2 instanceof Enemy&&(e2!=e)){
+          						while(e.covers(e2.x-5, e2.y)||e.covers(e2.x+20, e2.y)||e.covers(e2.x+7, e2.y))
+          							e.x=(e.getRandom());
+          					}
+          				}
+  					}
+          		}
+  			}
+			revalidate();
+			repaint();
+			
+		}
+	}
+	
+	class youListen extends KeyAdapter{
+		// 0 no key of importance pressed
+		// 1 -> pressed
+		// 2 <- pressed
+		//3 -> \\s
+		//4 <- \\s
+		//5 \\s
+   	 int state = 0;
+   	 boolean spacePressed=false;
+   	 boolean RPressed = false;
+   	 boolean LPressed = false;
+  	
+   	 public class TimeListener implements ActionListener{
+  		javax.swing.Timer t=null;
+  		public TimeListener(int delay){
+  			t=new javax.swing.Timer(delay,this);
+  			t.start();
+  		}
+  		public void actionPerformed(ActionEvent a) {
+  			updateState(true);
+  		}
+     }   
+     TimeListener tl=new TimeListener(50);
+     
+   	 
+   	 
+   	 public void updateState(boolean timed){
+   		 if(timed){
+   			 time-=1;
+   			 Collection<Bolt> b1=boltMap.values();
+   			 for(Bolt b: b1){
+   				 try{
+   					 if(b.goingDown)
+   						 b.y+=b.speed;
+   					 else
+   						 b.y-=b.speed;} catch(Exception ei){}
+   			 }
+   			 if(time==100&&difficulty==3){
+   				for(int i=0;i<28;i++){
+   					Enemy enemyX=new Enemy();
+   					shipMap.put(enemyIndex++,enemyX);
+   					ammo+=77;
+   				}	
+   	        	Collection<Ship> items=shipMap.values();
+   				for(Ship e: items){
+   	          		if(e instanceof Enemy){
+   	          			for(int i=0;i<5;i++){
+   	          				for(Ship e2: items){
+   	          					if(e2 instanceof Enemy&&(e2!=e)){
+   	          						while(e.covers(e2.x-5, e2.y)||e.covers(e2.x+20, e2.y)||e.covers(e2.x+7, e2.y))
+   	          							e.x=(e.getRandom());
+   	          					}
+   	          				}
+   	  					}
+   	          		}
+   	  			}
+   			}
+  		 }
+   		 int lastState=state; 
+   		 if(!timed){
+   			 if(state==0&&!spacePressed&&RPressed&&!LPressed)
+   				 state=1;
+   			 else if(state==0&&!spacePressed&&!RPressed&&LPressed)
+   				 state=2;
+   			 else if(state==0&&spacePressed&&RPressed&&!LPressed)
+   				 state=3;
+   			 else if(state==0&&spacePressed&&!RPressed&&LPressed)
+   				 state=4;
+   			 else if(state==0&&spacePressed&&!RPressed&&!LPressed)
+   				state=5;
+   			 else
+   				 state=0;
+   
+   			if(state==1){
+   				if(you.x<=center.getWidth()-40){
+   					you.x+=6+difficulty;
+   					if(lastState==1&&you.x<=center.getWidth()-40)
+   						you.x+=3;   						
+   				}
+   			}
+   			else if(state==2){
+   				if(you.x>=10){
+   					you.x-=(6+difficulty);
+   					if(lastState==2&&you.x<=center.getWidth()-40)
+						you.x-=3;  
+   				}
+   			}
+   			else if(state==3){
+   				if(you.x<=center.getWidth()-40)
+   					you.x+=6;
+   				if(ammo-->0){
+   					Bolt pew=new Bolt(you.x+you.size/2-5,you.y-11,false,5+difficulty*boltSpeedDifferential);
+   					boltMap.put(boltIndex++,pew);
+   				}
+   			}
+   			else if(state==4){
+   				if(you.x>=10)
+   					you.x-=6;
+   				if(ammo-->0){
+   					Bolt pew=new Bolt(you.x+you.size/2-5,you.y-11,false, 5+difficulty*boltSpeedDifferential);
+   					boltMap.put(boltIndex++,pew);
+   				}
+   			}
+   			else if(state==5){
+   				if(ammo-->0){
+   					Bolt pew=new Bolt(you.x+you.size/2-5,you.y-11,false,5+difficulty*boltSpeedDifferential);
+   					boltMap.put(boltIndex++,pew);
+   				}
+   			}
+   			if(ammo<0)
+   				ammo=0;
+   		}
+   		youInfo.remove(hpBar);
+   		youInfo.remove(timeL);
+   		youInfo.remove(ammoL);
+   		hpBar=new JLabel("HP: "+you.hp+"/100"); 
+   		timeL=new JLabel("   Time: "+time);
+   		ammoL=new JLabel("   Ammo: "+ammo);
+   		youInfo.add(hpBar);
+   		youInfo.add(timeL);
+   		youInfo.add(ammoL);
+
+    	Collection<Ship> items=shipMap.values();
+		for(Ship thisShip: items){
+			if(aBoltIsHitting(thisShip))
+				destroy(thisShip);
+		}
+		if(timed){
+			for(Ship s: items){
+				if(s instanceof Enemy){
+					if(((Enemy) s).FIREPEWPEWPEW()){
+						Bolt b2=new Bolt(s.x+s.size/2-5,s.y+16,true,5+difficulty*boltSpeedDifferential);
+						boltMap.put(boltIndex++, b2);
+					}
+				}
+			}
+			
+			for(Ship s: items){
+				if(s instanceof Enemy){
+					if(((Enemy) s).movingRight)
+						if(s.x<690)
+							s.x+=4;
+						else	
+							((Enemy)s).movingRight=false;
+					if(!((Enemy) s).movingRight)
+						if(s.x>4)
+							s.x-=4;
+						else	
+							((Enemy)s).movingRight=true;
+				}
+			}	
+		}
+		revalidate();
+   		repaint();
+   		if(time==0){
+   			quit();
+   		}
+   	 }
+   	 
+   	 	 
+   	 
+   	 public void keyReleased(KeyEvent e)
+   	 {
+   	     switch (e.getKeyCode()) {  
+   	       case KeyEvent.VK_SPACE: spacePressed = false; break;
+   	       case KeyEvent.VK_RIGHT: RPressed = false; break;
+   	       case KeyEvent.VK_LEFT: LPressed = false; break;
+   	     }
+   	     updateState(false);
+   	 }
+   	
+   	 public void keyPressed(KeyEvent e){
+   	     switch (e.getKeyCode()) {
+   	       case KeyEvent.VK_SPACE: spacePressed = true; break;
+   	       case KeyEvent.VK_RIGHT: RPressed = true; break;
+   	       case KeyEvent.VK_LEFT: LPressed = true; break;
+   	     }
+   	     if(e.getKeyCode()!=18)
+   	    	 updateState(false);
+   	 }
+   	 
+   	 public void keyTyped(KeyEvent e){
+   	 }
+   	 
+	}
+	
+	public void quit(){
+		JFrame winScreen=new JFrame();
+		winScreen.setSize(730,600);
+		winScreen.setVisible(true);
+		winScreen.setLocation(550, 290);
+		winScreen.setFocusable(true);
+		JLabel youWin=new JLabel("YOU WIN!"+"   Enemies destroyed: "+killCount+"  ");
+		JLabel perfect=new JLabel("100% COMPLETION!!!!!!!!!! YESSSSSSSSSSSSS!");
+		JLabel remainingTime=new JLabel("Time remaining: "+time);
+		if(time!=0){
+			winScreen.add(remainingTime, BorderLayout.NORTH);
+		}
+		winScreen.add(youWin);
+		if(specialMessage){
+			winScreen.add(perfect,BorderLayout.SOUTH);
+		}
+		youWin.setHorizontalAlignment( SwingConstants.CENTER );
+		perfect.setHorizontalAlignment( SwingConstants.CENTER );
+		remainingTime.setHorizontalAlignment( SwingConstants.CENTER );
+		
+		shipMap=new HashMap();
+		boltMap=new HashMap();;
+		enemyIndex=0;
+		boltIndex=0;
+		
+		setVisible(false);
+		CircleTransport yay=new CircleTransport("Circle Transport");
+		yay.setSize(730,600);
+		yay.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		//yay.setResizable(false);
+		yay.setVisible(true);
+		yay.setAlwaysOnTop(true);
+		yay.setBackground(Color.BLACK);
+		yay.setAutoRequestFocus(true);
+		yay.setLocation(550, 290);
+		yay.setFocusable(true);
+
+		winScreen.setAlwaysOnTop(true);
+		time=-1;
+	}
+	
+	public boolean aBoltIsHitting(Ship s){
+		Collection<Bolt> items2 =boltMap.values();
+    	for(Bolt b: items2){
+    		if (s.covers(b.x,b.y)||s.covers(b.x,b.y+b.size)||s.covers(b.x+b.size,b.y)||s.covers(b.x+b.size,b.y+b.size))
+    			return true;
+    	}
+		return false;
+	}
+	
+	public void destroy(Ship s){
+		System.out.println("Ship with the stats "+s+" was destroyed!");
+		if(!(s==you)){
+			killCount++;
+			shipMap.remove(s);
+			s.painted=false;
+			s.x=-9000;
+			s.y=1000;
+			s=null;
+			boolean killedAll=true;
+			Collection<Ship> items=shipMap.values();
+        	for(Ship e: items){
+       			if(e.y==50)
+       				killedAll=false;
+        	}
+        	if(killedAll){
+        		specialMessage=true;
+        		if(difficulty!=3)
+        			quit();
+        	}
+		}
+		else{
+			JFrame loseScreen=new JFrame();
+			loseScreen.setSize(730,600);
+			loseScreen.setVisible(true);
+			loseScreen.setLocation(550, 290);
+			loseScreen.setFocusable(true);
+			JLabel youLose=new JLabel("YOU DIED! YAY!!!!!!");
+			JLabel remainingTime=new JLabel("Time remaining: "+time+"  Enemies destroyed: "+killCount+"  ");
+			loseScreen.add(youLose);
+			loseScreen.add(remainingTime,BorderLayout.SOUTH);
+			youLose.setHorizontalAlignment( SwingConstants.CENTER );
+			remainingTime.setHorizontalAlignment( SwingConstants.CENTER );
+			shipMap=new HashMap();
+			boltMap=new HashMap();;
+			enemyIndex=0;
+			boltIndex=0;
+			
+			setVisible(false);
+			CircleTransport yay=new CircleTransport("Circle Transport");
+			yay.setSize(730,600);
+			yay.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			yay.setResizable(false);
+			yay.setVisible(true);
+			yay.setAlwaysOnTop(true);
+			yay.setBackground(Color.BLACK);
+			yay.setLocation(550, 290);
+			yay.setFocusable(true);
+
+			loseScreen.setAlwaysOnTop(true);
+			time=-1;
+		}
+	}
+
+	
+	public static void main(String[] args){
+		CircleTransport yay=new CircleTransport("Circle Transport");
+		yay.setSize(730,600);
+		yay.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		yay.setResizable(false);
+		yay.setVisible(true);
+		yay.setAlwaysOnTop(true);
+		yay.setBackground(Color.BLACK);
+		yay.setLocation(550, 290);
+		yay.setFocusable(true);
+	}
+}
