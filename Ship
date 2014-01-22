@@ -1,0 +1,50 @@
+import java.awt.Color;
+import java.awt.Graphics;
+
+
+public class Ship {
+	int hp;
+	int x;
+	int y;
+	int size;
+	boolean painted;
+	double serial;
+	
+	Ship(){
+		hp=100;
+		painted=true;
+		x=getRandom();
+		y=50;
+		size=15;
+		serial=Math.random();
+	}
+	
+	public int getRandom(){
+		return (int) (Math.random()*680+10);
+	}
+	
+	Ship(int hp, int size, int x, int y){
+		this.hp=hp;
+		this.size=size;
+		this.x=x;
+		this.y=y;
+		painted=true;
+	}
+	public void draw(Graphics p){
+		if(painted){
+			p.setColor(Color.blue);
+			p.fillOval(x,y,size,size);
+		}
+		else{
+			p.setColor(Color.white);
+			p.fillOval((int)x, (int)y, 0, 0);
+		}
+	}
+	public boolean covers(int x, int y){
+		return (this.x <= x && x <= this.x + size && this.y <= y && y <= this.y + size);
+    }
+ 
+	public String toString(){
+		return "HP "+hp+" X "+x+" Y "+y+" Size "+size+" "+serial;
+	}
+}
