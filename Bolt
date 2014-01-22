@@ -1,0 +1,41 @@
+import java.awt.Color;
+import java.awt.Graphics;
+
+
+public class Bolt {
+	int speed;
+	int x;
+	int y;
+	int size;
+	boolean goingDown;
+	boolean painted;
+	
+	Bolt(){
+		speed=5;
+		size=10;
+		painted=true;
+		x=150;
+		y=100;
+		goingDown=true;
+	}
+	
+	Bolt(int x1,int y1,boolean b,int speed1){
+		speed=speed1;
+		size=10;
+		painted=true;
+		x=x1;
+		y=y1;
+		goingDown=b;
+	}
+	
+	public void draw(Graphics p){
+		if(goingDown){
+			p.setColor(Color.yellow);
+			p.fillOval(x,y,size,size);
+		}
+		else{
+			p.setColor(Color.GREEN);
+			p.fillOval(x,y, size,size);
+		}
+	}
+}
